@@ -24,6 +24,8 @@ public class LaboratoryState extends AbstractApplicationState {
 
     private int q = 10;
 
+    private double delta_l = 0.05;
+
     @Override
     protected void initVariableNameToSettersMap() {
         variableNameToSetter.put("variant", StateHelper.getIntegerSetter("variant", this::setVariant));
@@ -33,6 +35,7 @@ public class LaboratoryState extends AbstractApplicationState {
         variableNameToSetter.put("l", StateHelper.getDoubleSetter("l", this::setL));
         variableNameToSetter.put("T", StateHelper.getDoubleSetter("T", this::setT));
         variableNameToSetter.put("q", StateHelper.getIntegerSetter("q", this::setQ));
+        variableNameToSetter.put("delta_l", StateHelper.getIntegerSetter("delta_l", this::setDelta_l));
     }
 
     @Override
@@ -48,6 +51,12 @@ public class LaboratoryState extends AbstractApplicationState {
         variableNameToGetter.put("A", () -> MatrixUtils.getFrobeniusMatrix(new double[]{1, a1, a2}));
         variableNameToGetter.put("B", () -> new ArrayRealVector(new double[]{0, 0, b}));
         variableNameToGetter.put("C", () -> new ArrayRealVector(new double[]{1, 0, 0}));
+        variableNameToGetter.put("L", () -> {
+            if (variant == 1) {
+                return new ArrayRealVector(new double[]{0, l, 0});
+            }
+            return new ArrayRealVector(new double[]{0, 0, l});
+        });
     }
 
     public void setVariant(int variant) {
@@ -99,10 +108,14 @@ public class LaboratoryState extends AbstractApplicationState {
     }
 
     public void setQ(int q) {
-        if (q < 2 || q > 10) {
-            ConsoleUtils.println("q \u2209 [2, 10]");
+        if (q < 6 || q > 10) {
+            ConsoleUtils.println("q \u2209 [6, 10]");
             return;
         }
         this.q = q;
+    }
+
+    public void setDelta_l(double delta_l) {
+        this.delta_l = delta_l;
     }
 }
