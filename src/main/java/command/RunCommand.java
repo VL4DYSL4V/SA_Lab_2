@@ -46,6 +46,7 @@ public class RunCommand extends AbstractRunnableCommand {
     private List<RealVector> computeYsAndWriteXs(MatricesDto dto) {
         int variant = (int) applicationState.getVariable("variant");
         VectorXDao dao = DAOS.get(variant);
+        dao.clear();
         RealMatrix C = (RealMatrix) applicationState.getVariable("C");
         RealMatrix L = (RealMatrix) applicationState.getVariable("L");
         double deltaL = (double) applicationState.getVariable("delta_l");
