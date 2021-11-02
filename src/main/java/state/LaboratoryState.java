@@ -5,10 +5,13 @@ import framework.state.StateHelper;
 import framework.utils.ConsoleUtils;
 import framework.utils.MatrixUtils;
 import lombok.Getter;
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
 
 @Getter
 public class LaboratoryState extends AbstractApplicationState {
+
+    private final int K = 5000;
 
     private int variant = 1;
 
@@ -41,6 +44,7 @@ public class LaboratoryState extends AbstractApplicationState {
     @Override
     protected void initVariableNameToGettersMap() {
         variableNameToGetter.put("variant", this::getVariant);
+        variableNameToGetter.put("K", this::getK);
         variableNameToGetter.put("Uk", () -> new ArrayRealVector(new double[]{1.0}));
         variableNameToGetter.put("a1", this::getA1);
         variableNameToGetter.put("a2", this::getA2);
@@ -49,13 +53,14 @@ public class LaboratoryState extends AbstractApplicationState {
         variableNameToGetter.put("T", this::getT);
         variableNameToGetter.put("q", this::getQ);
         variableNameToGetter.put("A", () -> MatrixUtils.getFrobeniusMatrix(new double[]{1, a1, a2}));
-        variableNameToGetter.put("B", () -> new ArrayRealVector(new double[]{0, 0, b}));
-        variableNameToGetter.put("C", () -> new ArrayRealVector(new double[]{1, 0, 0}));
+        variableNameToGetter.put("B", () -> new Array2DRowRealMatrix(new double[]{0, 0, b}));
+        variableNameToGetter.put("C", () -> new Array2DRowRealMatrix(new double[][]{{1, 0, 0}}));
+        variableNameToGetter.put("delta_l", this::getDelta_l);
         variableNameToGetter.put("L", () -> {
             if (variant == 1) {
-                return new ArrayRealVector(new double[]{0, l, 0});
+                return new Array2DRowRealMatrix(new double[][]{{0, l, 0}});
             }
-            return new ArrayRealVector(new double[]{0, 0, l});
+            return new Array2DRowRealMatrix(new double[][]{{0, 0, l}});
         });
     }
 
