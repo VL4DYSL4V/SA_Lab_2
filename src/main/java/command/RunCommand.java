@@ -64,7 +64,6 @@ public class RunCommand extends AbstractRunnableCommand {
                 dao.write(i, x);
             }
 
-
             J += Math.abs(x.getEntry(0) - 1) * T;
             if (previousJ < J) {
                 deltaL *= -1;
