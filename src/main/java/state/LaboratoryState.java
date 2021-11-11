@@ -11,7 +11,7 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 @Getter
 public class LaboratoryState extends AbstractApplicationState {
 
-    private final int K = 5000;
+    private final int K = 2500;
 
     private int variant = 1;
 
@@ -21,7 +21,7 @@ public class LaboratoryState extends AbstractApplicationState {
 
     private double b = 1.0;
 
-    private double l = -0.25;
+    private double l = -0;
 
     private double T = 0.02;
 
@@ -73,26 +73,10 @@ public class LaboratoryState extends AbstractApplicationState {
     }
 
     public void setA1(double a1) {
-        if (a1 < 1 || a1 > 10) {
-            ConsoleUtils.println("a1 \u2209 [1, 10]");
-            return;
-        }
-        if (a1 * a2 <= 1) {
-            ConsoleUtils.println("a1 * a2 <= 1");
-            return;
-        }
         this.a1 = a1;
     }
 
     public void setA2(double a2) {
-        if (a2 < 1 || a2 > 10) {
-            ConsoleUtils.println("a2 \u2209 [1, 10]");
-            return;
-        }
-        if (a1 * a2 <= 1) {
-            ConsoleUtils.println("a1 * a2 <= 1");
-            return;
-        }
         this.a2 = a2;
     }
 
@@ -105,10 +89,6 @@ public class LaboratoryState extends AbstractApplicationState {
     }
 
     public void setT(double t) {
-        if (T < 0.001 || T > 0.1) {
-            ConsoleUtils.println("T \u2209 [0.001, 0.1]");
-            return;
-        }
         this.T = t;
     }
 

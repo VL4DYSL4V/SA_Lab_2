@@ -2,9 +2,9 @@ package command;
 
 import chart.ChartHelper;
 import command.dto.MatricesDto;
-import dao.FileSystemVectorXDao;
-import dao.VectorXDao;
+import command.dto.ResultDto;
 import framework.command.AbstractRunnableCommand;
+import framework.exception.LaboratoryFrameworkException;
 import framework.utils.ConsoleUtils;
 import framework.utils.MatrixUtils;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -14,70 +14,79 @@ import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.CombinatoricsUtils;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class RunCommand extends AbstractRunnableCommand {
 
     private static final String NAME = "run";
 
-    private static final Map<Integer, VectorXDao> DAOS = new HashMap<>();
-
     public RunCommand() {
         super(NAME);
-        DAOS.put(1, new FileSystemVectorXDao(1));
-        DAOS.put(2, new FileSystemVectorXDao(2));
     }
 
     @Override
     public void execute(String[] strings) {
-        MatricesDto matricesDto = computeMatrices();
-        List<RealVector> sequenceY = computeYsAndWriteXs(matricesDto);
-        if (!sequenceY.isEmpty()) {
-            double T = (double) applicationState.getVariable("T");
-            ChartHelper.getInstance().showNextChart(sequenceY, T);
-        } else {
-            ConsoleUtils.println("No y-s were computed!");
-        }
+        ResultDto result = getResult();
+        double T = (double) applicationState.getVariable("T");
+        ChartHelper.getInstance().showNextChart(result, T);
         System.gc();
     }
 
-    private List<RealVector> computeYsAndWriteXs(MatricesDto dto) {
+    private ResultDto getResult() {
+        MatricesDto dto = computeMatrices();
+
         int variant = (int) applicationState.getVariable("variant");
-        VectorXDao dao = DAOS.get(variant);
-        dao.clear();
         RealMatrix C = (RealMatrix) applicationState.getVariable("C");
         RealMatrix L = (RealMatrix) applicationState.getVariable("L");
         double deltaL = (double) applicationState.getVariable("delta_l");
         int K = (int) applicationState.getVariable("K");
         double T = (double) applicationState.getVariable("T");
         RealVector Uk = (RealVector) applicationState.getVariable("Uk");
-        RealVector x = new ArrayRealVector(dto.getG().getRowDimension());
 
-        List<RealVector> out = new ArrayList<>(K);
-        double J = 0.0;
-        double previousJ = J;
-        for (int i = 0; i < K; i++) {
-            RealVector y = C.operate(x);
-            out.add(y);
-            if (i % 25 == 0) {
-                dao.write(i, x);
-            }
+        List<RealVector> listX = computeListX(dto, K, L, Uk);
+        List<RealVector> nonOptimalX = listX;
 
-            J += Math.abs(x.getEntry(0) - 1) * T;
-            if (previousJ < J) {
-                deltaL *= -1;
-            }
+        double zeroJ = calculateJ(listX, T);
+        double currentJ = Double.NEGATIVE_INFINITY;
+        while (zeroJ > currentJ) {
             if (variant == 1) {
                 L.setEntry(0, 1, L.getEntry(0, 1) + deltaL);
             } else {
                 L.setEntry(0, 2, L.getEntry(0, 2) + deltaL);
             }
-            previousJ = J;
+            listX = computeListX(dto, K, L, Uk);
+            currentJ = calculateJ(listX, T);
+        }
+
+        String template = "Optimal l = %f";
+        if (variant == 1) {
+            ConsoleUtils.println(String.format(template, L.getEntry(0, 1)));
+        } else {
+            ConsoleUtils.println(String.format(template, L.getEntry(0, 2)));
+        }
+
+        List<RealVector> nonOptimalY = nonOptimalX.stream().map(C::operate).collect(Collectors.toList());
+        List<RealVector> optimalY = listX.stream().map(C::operate).collect(Collectors.toList());
+        return new ResultDto(optimalY, nonOptimalY);
+    }
+
+    private List<RealVector> computeListX(MatricesDto dto, int K, RealMatrix L, RealVector Uk) {
+        RealVector x = new ArrayRealVector(dto.getG().getRowDimension());
+        List<RealVector> listX = new ArrayList<>();
+        for (int i = 0; i < K; i++) {
+            listX.add(x);
             x = computeVectorX(dto, L, Uk, x);
         }
-        return out;
+        return listX;
+    }
+
+    private static double calculateJ(List<? extends RealVector> listX, double T) {
+        return listX.stream()
+                .map((x) -> Math.abs(x.getEntry(0) - 1) * T)
+                .reduce(Double::sum)
+                .orElseThrow(LaboratoryFrameworkException::new);
     }
 
     private RealVector computeVectorX(MatricesDto dto, RealMatrix L, RealVector Uk, RealVector previousX) {
