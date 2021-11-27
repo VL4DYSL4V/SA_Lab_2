@@ -66,6 +66,7 @@ public class RunCommand extends AbstractRunnableCommand {
         } else {
             ConsoleUtils.println(String.format(template, L.getEntry(0, 2)));
         }
+        ConsoleUtils.println(String.format("J_0 = %f", zeroJ));
 
         List<RealVector> nonOptimalY = nonOptimalX.stream().map(C::operate).collect(Collectors.toList());
         List<RealVector> optimalY = listX.stream().map(C::operate).collect(Collectors.toList());
